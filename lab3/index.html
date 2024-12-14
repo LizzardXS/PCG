@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Processing with OpenCV.js</title>
+  <script async src="https://docs.opencv.org/4.x/opencv.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f7f7f7;
+      text-align: center;
+    }
+    #canvas {
+      border: 1px solid #ccc;
+      margin-top: 20px;
+    }
+    .controls {
+      margin-top: 20px;
+    }
+    select, input, button {
+      font-size: 14px;
+      padding: 10px;
+      margin: 10px;
+      width: 200px;
+    }
+  </style>
+</head>
+<body>
+<h1>Image Processing with OpenCV.js</h1>
+
+<input type="file" id="imageUpload" accept="image/*" />
+
+<div class="controls">
+  <!-- Морфологическая обработка -->
+  <h3>Морфологическая обработка</h3>
+  <label for="morphShape">Выберите форму структурирующего элемента:</label>
+  <select id="morphShape">
+    <option value="rectangle">Квадрат</option>
+    <option value="ellipse">Эллипс</option>
+    <option value="cross">Крест</option>
+  </select>
+
+  <label for="morphSize">Выберите размер:</label>
+  <input type="number" id="morphSize" value="5" min="1" max="20" />
+
+  <label for="morphOperation">Выберите операцию:</label>
+  <select id="morphOperation">
+    <option value="erosion">Эрозия</option>
+    <option value="dilation">Дилатация</option>
+    <option value="opening">Открытие</option>
+    <option value="closing">Закрытие</option>
+  </select>
+  <button onclick="applyMorphologicalOperation()">Применить операцию</button>
+</div>
+
+<div class="controls">
+  <!-- Медианный фильтр -->
+  <h3>Медианный фильтр</h3>
+  <label for="medianFilterSize">Размер фильтра:</label>
+  <input type="number" id="medianFilterSize" value="5" min="1" max="15" />
+  <button onclick="applyMedianFilter()">Применить медианный фильтр</button>
+</div>
+
+<div class="controls">
+  <button onclick="resetImage()">Вернуть исходное изображение</button>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<script src="app.js"></script>
+</body>
+</html>
