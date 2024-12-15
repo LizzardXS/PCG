@@ -52,10 +52,7 @@
 2. Откройте `index.html` в браузере.
 
 ## Скриншоты
-
-![RGB Model](screenshots/rgb-example.png)
-![CMYK Model](screenshots/cmyk-example.png)
-![HSV Model](screenshots/hsv-example.png)
+![Uploading Снимок экрана 2024-12-15 в 12.31.43.png…](
 
 ## Примечания
 
