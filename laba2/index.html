@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>File Information</title>
+  <style>
+    .image-container {
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    .image-item {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+      width: 200px;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+      margin-bottom: 10px;
+    }
+    .image-details {
+      font-size: 12px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Choose a Folder or Image Files</h1>
+<button id="choose-files">Choose Files or Folder</button>
+<input type="file" id="file-input" accept="image/*" multiple webkitdirectory style="display:none;" />
+
+<!-- Image display area for all images -->
+<div id="imageDisplayArea">
+  <h3>Image Previews:</h3>
+  <div class="image-container" id="imagePreviewContainer"></div>
+</div>
+
+<script>
+  // Event listener for file input (including folder selection)
+  document.getElementById('choose-files').addEventListener('click', () => {
+    document.getElementById('file-input').click();
+  });
+
+  document.getElementById('file-input').addEventListener('change', handleFileSelect);
+
+  function handleFileSelect(event) {
+    const files = event.target.files;
+    if (files.length === 0) return;
+
+    // Clear previous content
+    document.getElementById('imagePreviewContainer').innerHTML = '';
+
+    // Process all selected files
+    Array.from(files).forEach(file => {
+      const fileReader = new FileReader();
+
+      // Only process images
+      if (file.type.startsWith('image/')) {
+        fileReader.onload = function(e) {
+          const image = new Image();
+          image.src = e.target.result;
+
+          // Show the image preview in the container
+          const imageContainer = document.createElement('div');
+          imageContainer.classList.add('image-item');
+          const imageElement = document.createElement('img');
+          imageElement.src = e.target.result;
+          imageContainer.appendChild(imageElement);
+
+          // Get the image info and display below the image
+          image.onload = function() {
+            const resolution = `${image.width}x${image.height}`;
+            const colorDepth = getColorDepth(image);
+            const compression = getFileExtension(file.name).toUpperCase();
+            const creationDate = file.lastModifiedDate ? new Date(file.lastModifiedDate).toLocaleString() : "N/A";
+            const lastModifiedDate = file.lastModified ? new Date(file.lastModified).toLocaleString() : "N/A";
+
+            const details = document.createElement('div');
+            details.classList.add('image-details');
+            details.innerHTML = `
+              <strong>Resolution:</strong> ${resolution}<br>
+              <strong>Color Depth:</strong> ${colorDepth}<br>
+              <strong>Compression:</strong> ${compression}<br>
+              <strong>Created:</strong> ${creationDate}<br>
+              <strong>Last Modified:</strong> ${lastModifiedDate}
+            `;
+            imageContainer.appendChild(details);
+            document.getElementById('imagePreviewContainer').appendChild(imageContainer);
+          };
+        };
+
+        fileReader.readAsDataURL(file);
+      }
+    });
+
+    // Display the image preview area if images are loaded
+    if (document.getElementById('imagePreviewContainer').children.length > 0) {
+      document.getElementById('imageDisplayArea').style.display = 'block';
+    }
+  }
+
+  function getColorDepth(image) {
+    // A simple method to determine the color depth (in bits)
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = image.width;
+    canvas.height = image.height;
+    ctx.drawImage(image, 0, 0);
+
+    // Get the pixel data and calculate color depth (based on RGBA)
+    const pixelData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+    const uniqueColors = new Set();
+    for (let i = 0; i < pixelData.length; i += 4) {
+      const color = `${pixelData[i]},${pixelData[i+1]},${pixelData[i+2]}`;
+      uniqueColors.add(color);
+    }
+
+    // Return the color depth as the number of unique RGBA colors
+    return uniqueColors.size;
+  }
+
+  function getFileExtension(filename) {
+    const extension = filename.split('.').pop().toLowerCase();
+    return extension;
+  }
+</script>
+
+</body>
+</html>
