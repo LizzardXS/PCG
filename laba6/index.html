@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Transformations</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: black; /* Черный фон для основной сцены */
+            font-family: Arial, sans-serif;
+        }
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        button {
+            padding: 12px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50; /* Зелёный фон для кнопок */
+            color: white; /* Белый цвет текста на кнопках */
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049; /* Темно-зеленый при наведении */
+        }
+        #matrixDisplay {
+            position: absolute;
+            bottom: 20px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.8); /* Белый фон для матрицы */
+            color: black; /* Черный цвет текста матрицы */
+            padding: 10px;
+            font-family: monospace;
+            white-space: pre;
+            max-width: 500px; /* Увеличим максимальную ширину */
+            overflow: auto;
+            max-height: 300px; /* Увеличим максимальную высоту */
+            font-size: 14px;
+            border: 1px solid #ccc; /* Добавим границу вокруг матрицы */
+            border-radius: 5px; /* Сглаженные углы */
+        }
+        .projectionCanvas {
+            border: 1px solid #ccc;
+            margin: 10px;
+            width: 300px;
+            height: 300px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+<div id="ui">
+    <button onclick="scaleUp()">Scale Up</button>
+    <button onclick="scaleDown()">Scale Down</button>
+    <button onclick="moveRight()">Move Right</button>
+    <button onclick="moveLeft()">Move Left</button>
+    <button onclick="moveUp()">Move Up</button>
+    <button onclick="moveDown()">Move Down</button>
+    <button onclick="rotate()">Rotate</button>
+</div>
+<div id="matrixDisplay">Transformation Matrix: </div>
+
+<!-- Канвас для ортографической проекции Oxy -->
+<div style="position: absolute; bottom: 10px; width: 100%; display: flex; justify-content: right;">
+    <canvas id="oxyCanvas" class="projectionCanvas"></canvas>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(3, 3, 7);
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const axesHelper = new THREE.AxesHelper(5);
+    scene.add(axesHelper);
+    const light = new THREE.PointLight(0xffffff, 1, 100);
+    light.position.set(5, 5, 5);
+    scene.add(light);
+    const ambientLight = new THREE.AmbientLight(0x404040); // Мягкое освещение
+    scene.add(ambientLight);
+
+    const material = new THREE.MeshStandardMaterial({
+        color: 0x00ff00, // Зелёный цвет
+        metalness: 0.3, // Лёгкий металлический блеск
+        roughness: 0.7, // Шероховатость
+    });
+
+    function create3DC() {
+        const group = new THREE.Group();
+        const verticalGeometry = new THREE.BoxGeometry(0.2, 2, 0.2); // Ширина, высота, глубина
+        const verticalMesh = new THREE.Mesh(verticalGeometry, material);
+        verticalMesh.position.set(-1, 0, 0);
+        const topGeometry = new THREE.BoxGeometry(2, 0.2, 0.2); // Длина, ширина, глубина
+        const topMesh = new THREE.Mesh(topGeometry, material);
+        topMesh.position.set(0, 1, 0); // Смещаем вверх
+        const bottomGeometry = new THREE.BoxGeometry(2, 0.2, 0.2); // Длина, ширина, глубина
+        const bottomMesh = new THREE.Mesh(bottomGeometry, material);
+        bottomMesh.position.set(0, -1, 0); // Смещаем вниз
+        group.add(verticalMesh, topMesh, bottomMesh);
+        return group;
+    }
+
+    const cObject = create3DC();
+    scene.add(cObject);
+    cObject.position.y = 2;  // Смещаем букву C вверх
+    axesHelper.position.y = 2;
+
+    // Функции для преобразований
+    function scaleUp() {
+        cObject.scale.set(cObject.scale.x * 1.2, cObject.scale.y * 1.2, cObject.scale.z * 1.2);
+        printTransformationMatrix();
+    }
+    function scaleDown() {
+        cObject.scale.set(cObject.scale.x * 0.8, cObject.scale.y * 0.8, cObject.scale.z * 0.8);
+        printTransformationMatrix();
+    }
+    function moveRight() {
+        cObject.position.x += 0.5;
+        printTransformationMatrix();
+    }
+    function moveLeft() {
+        cObject.position.x -= 0.5;
+        printTransformationMatrix();
+    }
+    function moveUp() {
+        cObject.position.y += 0.5;
+        printTransformationMatrix();
+    }
+    function moveDown() {
+        cObject.position.y -= 0.5;
+        printTransformationMatrix();
+    }
+    function rotate() {
+        const axis = new THREE.Vector3(0, 1, 0);
+        axis.normalize();
+        cObject.rotateOnAxis(axis, Math.PI / 8);
+        printTransformationMatrix();
+    }
+
+    // Вывод матрицы преобразования
+    function printTransformationMatrix() {
+        cObject.updateMatrix();  // Обновляем матрицу объекта
+        const matrix = cObject.matrix.elements;
+        const matrixText = `Transformation Matrix:
+        [ M00: ${matrix[0].toFixed(3)}, M01: ${matrix[1].toFixed(3)}, M02: ${matrix[2].toFixed(3)}, M03: ${matrix[3].toFixed(3)} ]
+        [ M10: ${matrix[4].toFixed(3)}, M11: ${matrix[5].toFixed(3)}, M12: ${matrix[6].toFixed(3)}, M13: ${matrix[7].toFixed(3)} ]
+        [ M20: ${matrix[8].toFixed(3)}, M21: ${matrix[9].toFixed(3)}, M22: ${matrix[10].toFixed(3)}, M23: ${matrix[11].toFixed(3)} ]
+        [ M30: ${matrix[12].toFixed(3)}, M31: ${matrix[13].toFixed(3)}, M32: ${matrix[14].toFixed(3)}, M33: ${matrix[15].toFixed(3)} ]`;
+        document.getElementById('matrixDisplay').textContent = matrixText;
+    }
+
+    // Канвас для ортографической проекции Oxy
+    const oxyCanvas = document.getElementById("oxyCanvas");
+    const rendererOxy = new THREE.WebGLRenderer({ canvas: oxyCanvas });
+    rendererOxy.setSize(300, 300);
+    const cameraOxy = new THREE.OrthographicCamera(-5, 5, 5, -5, 0.1, 1000);
+    cameraOxy.position.z = 5;
+
+    function renderProjections() {
+        // Рендеринг проекции Oxy
+        rendererOxy.render(scene, cameraOxy);
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+        renderProjections(); // Рендерим только проекцию Oxy
+    }
+    animate();
+</script>
+</body>
+</html>
